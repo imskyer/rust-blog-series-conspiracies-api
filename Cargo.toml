@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
 
 [dependencies]
+clap = "2.31.2"
