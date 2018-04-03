@@ -1,0 +1,6 @@
+[package]
+name = "conspiracies-api"
+version = "0.1.0"
+authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
+
+[dependencies]
