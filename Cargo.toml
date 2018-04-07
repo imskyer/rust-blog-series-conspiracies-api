@@ -5,3 +5,4 @@ authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
 
 [dependencies]
 clap = "2.31.2"
+serde_json = "1.0.13"
