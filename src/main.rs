@@ -41,30 +41,22 @@ fn main() {
             process::exit(1);
         }
 
-        let contents = read_file(input_value);
-        match parse_json(contents) {
-            Ok(parsed_json) => println!("Successfully parsed the json!\ncategories: {}\ntext: {}", parsed_json["categories"], parsed_json["text"]["*"]),
-            Err(_) => println!("uh oh, something happened!"),
-        }
+        // reading the contents of the wikipedia query results I stored on my
+        // file system, it is a JSON file.  I'm using a mutable var here since 
+        // the read_to_string call will be updating the variable as it reads the
+        // file's contents.
+        let mut contents = String::new();
+        let mut f = File::open(input_value).expect("file not found");
+        f.read_to_string(&mut contents)
+           .expect("something went wrong reading the file");
+
+        let parsed_json: Value = serde_json::from_str(contents.as_str())
+                                .expect("an error occurred while attempting to parse the JSON string");
+        // when querying wikipedia the resulting JSON for the search the results are stored under a 
+        // a root property called parse.  To make it easier to get to the actual text that I want to
+        // work with I'm setting up a var that contains all info for the wikipedia page.
+        let conspiracy_doc = &parsed_json["parse"];
+        println!("title: {}\ncontent: {:?}\n", conspiracy_doc["title"], conspiracy_doc["text"]);
+        println!("Successfully parsed the JSON!");
     } 
 } 
-
-fn read_file(filepath: &str) -> String {
-    //Here's an example of reading a file
-    let mut f = File::open(filepath).expect("file not found");
-    let mut contents = String::new();
-    f.read_to_string(&mut contents)
-        .expect("something went wrong reading the file");
-
-    return contents;
-}
-
-fn parse_json(json_str: String) -> Result<Value, &'static str> { 
-    let json_obj: Value = serde_json::from_str(&json_str).expect("an error occured while parsing the JSON string");
-    // The results of Wikipedia queries returned in the JSON format have a root property called parse. The data I am
-    // interested in are all children of that one property so I'm going to create a new Value object of just the parts
-    // I'm interested in, it makes it a little easier to interact with the data.
-    let wiki_json = &json_obj["parse"];
-    println!("title: {}", wiki_json["title"]);   
-    return Ok(wiki_json.clone());
-}
