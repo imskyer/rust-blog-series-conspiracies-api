@@ -1,14 +1,14 @@
-// brings the clap crate into scope here
+// extern crate calls bring the crate into scope for this file
 extern crate clap; 
-// brings the serde_json crate into scope
 extern crate serde_json;
 
 // brings the App trait from the clap create into this scope
+// The use statements bring structs, enums, functions, etc 
+// so that you don't have to use their fully qualified names
+// As an example the line below allows me to use App::<fn name>
+// instead of clap::App::<fn name>
 use clap::{App, Arg};
-// Path is part of the standard lib so we only need the 
-// `use` statement to bring it into scope 
 use std::path::Path;
-// for the process::exit call in the main fn
 use serde_json::{Value};
 use std::process;
 use std::fs::File;
@@ -45,8 +45,8 @@ fn main() {
         // file system, it is a JSON file.  I'm using a mutable var here since 
         // the read_to_string call will be updating the variable as it reads the
         // file's contents.
-        let mut contents = String::new();
         let mut f = File::open(input_value).expect("file not found");
+        let mut contents = String::new();
         f.read_to_string(&mut contents)
            .expect("something went wrong reading the file");
 
@@ -60,3 +60,5 @@ fn main() {
         println!("Successfully parsed the JSON!");
     } 
 } 
+
+
