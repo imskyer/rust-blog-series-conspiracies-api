@@ -56,7 +56,7 @@ fn main() {
         // a root property called parse.  To make it easier to get to the actual text that I want to
         // work with I'm setting up a var that contains all info for the wikipedia page.
         let conspiracy_doc = &parsed_json["parse"];
-        println!("title: {}\ncontent: {:?}\n", conspiracy_doc["title"], conspiracy_doc["text"]);
+        println!("Just to prove I have parsed the documents here's the page title: {}\n", conspiracy_doc["title"]);
         println!("Successfully parsed the JSON!");
     } 
 } 
