@@ -1,6 +1,6 @@
-extern crate clap; // brings the clap create into scope here
-use clap::{App, Arg};     // brings the App trait from the clap create into this scope
-use std::path::Path;  // Path is part of the standard lib so we only need the `use` statement to bring it into scope
+extern crate clap;     // brings the clap create into scope here
+use clap::{App, Arg};  // brings the App and Arg structs from the clap create into this scope
+use std::path::Path;   // Path is part of the standard lib so we only need the `use` statement to bring it into scope
 
 fn main() {
     let _matches = App::new("conspiracies-db-loader")
@@ -22,10 +22,6 @@ fn main() {
             println!("Path does not exst")
         }
 
-        parse_json_file();
+        // Reading the file in and parsing its contents will happen here.
     } 
-}
-
-fn parse_json_file() {
-    println!("This is a placeholder in the parse_json_file");
 }
