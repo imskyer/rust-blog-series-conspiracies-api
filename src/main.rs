@@ -31,13 +31,8 @@ fn main() {
     if let Some(input_value) = _matches.value_of("input")  {
         
         let path = Path::new(input_value);
-        if !path.exists() {
-            println!("--input value is not a valid path");
-            process::exit(1);
-        }
-
-        if path.is_dir() {
-            println!("--input value is a path to a directory, not a file.");
+        if !path.is_file() {
+            println!("--input value is not a valid path to a file");
             process::exit(1);
         }
 
