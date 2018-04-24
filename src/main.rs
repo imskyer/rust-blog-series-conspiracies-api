@@ -7,21 +7,18 @@ fn main() {
        .version("0.0.1")
        .about("Parses and stores Wikipedia conspiracy theories data")
        .author("Rob Rowe.")
-       .arg(Arg::with_name("input")
-            .short("i")
-            .long("input")
-            .value_name("PATH")
-            .help("A path to a JSON doc ready to be parsed")
+       .arg(Arg::with_name("title")
+            .short("t")
+            .long("title")
+            .value_name("PAGE TITLE")
+            .help("A title of a wikipage to retrieve")
             .takes_value(true)
             .required(true))
        .get_matches(); 
 
-    if let Some(path) = _matches.value_of("input")  {
-        println!("A path was passed in: {} (Pretend its a path, it hasn't been tested)", path);
-        if !Path::new(path).exists() {
-            println!("Path does not exst")
-        }
-
-        // Reading the file in and parsing its contents will happen here.
+    if let Some(title) = _matches.value_of("title")  {
+        println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
+        
+        // calling Wikipedia using the wikipedia crate will happen here
     } 
 }
