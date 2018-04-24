@@ -1,6 +1,6 @@
 // extern crate calls bring the crate into scope for this file
 extern crate clap; 
-extern crate serde_json;
+extern crate wikipedia;
 
 // brings the App trait from the clap create into this scope
 // The use statements bring structs, enums, functions, etc 
@@ -9,6 +9,7 @@ extern crate serde_json;
 // instead of clap::App::<fn name>
 use clap::{App, Arg};
 use std::process;
+
 
 fn main() {
     let _matches = App::new("conspiracies-db-loader")
@@ -31,6 +32,21 @@ fn main() {
         }
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
         
-        // calling Wikipedia using the wikipedia crate will happen here
+        // This gets the wiki client, which is an HTTP client. 
+        let _wiki = wikipedia::Wikipedia::<wikipedia::http::default::Client>::default();
+        // Retrieves the page data 
+        let _page = _wiki.page_from_title(title.to_string());
+        match _page.get_pageid() {
+            Err(e) => println!("ERROR There was a problem getting the page_id for {}: {}", title.to_string(), e),
+            Ok(page_id) => {
+                if page_id == "-1" {
+                    println!("404 Could not find a page with the title {}", title.to_string());
+                } else {
+                    println!("page: {:#?}", _page.get_pageid().unwrap());
+                }
+            }
+        }
+    
+
     } 
 }
