@@ -1,6 +1,6 @@
 extern crate clap;     // brings the clap create into scope here
 use clap::{App, Arg};  // brings the App and Arg structs from the clap create into this scope
-use std::path::Path;   // Path is part of the standard lib so we only need the `use` statement to bring it into scope
+use std::process;   // Path is part of the standard lib so we only need the `use` statement to bring it into scope
 
 fn main() {
     let _matches = App::new("conspiracies-db-loader")
@@ -17,6 +17,11 @@ fn main() {
        .get_matches(); 
 
     if let Some(title) = _matches.value_of("title")  {
+
+        if title == "" {
+            println!("Cannot search for an emtpy title!");
+            process::exit(1);
+        }
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
         
         // calling Wikipedia using the wikipedia crate will happen here
