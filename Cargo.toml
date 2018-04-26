@@ -1,6 +1,6 @@
 [package]
 name = "conspiracies"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
 
 [dependencies]

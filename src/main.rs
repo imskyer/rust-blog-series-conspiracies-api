@@ -7,16 +7,16 @@ extern crate wikipedia;
 // so that you don't have to use their fully qualified names
 // As an example the line below allows me to use App::<fn name>
 // instead of clap::App::<fn name>
-use clap::{App, Arg};
+//use clap::{App, Arg};
 use std::process;
 
 
 fn main() {
-    let _matches = App::new("conspiracies-db-loader")
+    let _matches = clap::App::new("conspiracies")
        .version("0.0.1")
        .about("Parses and stores Wikipedia conspiracy theories data")
        .author("Rob Rowe.")
-       .arg(Arg::with_name("title")
+       .arg(clap::Arg::with_name("title")
             .short("t")
             .long("title")
             .value_name("PAGE TITLE")
@@ -41,9 +41,10 @@ fn main() {
             Ok(page_id) => {
                 if page_id == "-1" {
                     println!("404 Could not find a page with the title {}", title.to_string());
-                } else {
-                    println!("page: {:#?}", _page.get_pageid().unwrap());
-                }
+                    process::exit(1);
+                } 
+                
+                println!("page: {:#?}", _page.get_links().unwrap().count());
             }
         }
     
