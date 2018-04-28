@@ -9,7 +9,65 @@ extern crate wikipedia;
 // instead of clap::App::<fn name>
 //use clap::{App, Arg};
 use std::process;
+use wikipedia::{Wikipedia};
 
+struct WikiPage  {
+    title: String, 
+    page_id: String,
+    summary: String,
+    content: String,
+    background: String, 
+    incident: String, 
+    investigations: String, 
+}
+
+struct WikiRepo {
+    wiki: Wikipedia<wikipedia::http::default::Client>,
+}
+
+/// Handles interaction with the Wikipedia site
+impl WikiRepo {
+  /// get_page returns a WikiPage object that represents the page for the given title
+  fn get_page(self, title: String) -> Result<WikiPage, wikipedia::Error> {
+      let page = self.wiki.page_from_title(title.to_string());  
+      
+      match page.get_pageid() {
+        Err(e) => Err(e),
+        Ok(page_id) => {
+            // background can be None sometimes but I want to store an empty 
+            // string instead of some other value
+            let background = match page.get_section_content("background").unwrap_or_default()  {
+                Some(val) => val,
+                None => String::from("")
+            };
+            
+            // incidents can be None sometimes but I want to store an empty 
+            // string instead of some other value
+            let incident = match page.get_section_content("incident").unwrap_or_default() {
+                Some(val) => val,
+                None => String::from("")
+            };
+
+            // investigations can be None sometimes but I want to store an empty 
+            // string instead of some other value
+            let investigations = match page.get_section_content("investigations").unwrap_or_default() {
+                Some(val) => val,
+                None => String::from("")
+            };
+
+            Ok(WikiPage {
+                title: title, 
+                page_id: page_id,
+                summary: page.get_summary().unwrap(),
+                content: page.get_content().unwrap(),
+                background:  background, 
+                incident: incident, 
+                investigations: investigations, 
+            })
+        }
+      }
+  }
+}
 
 fn main() {
     let _matches = clap::App::new("conspiracies")
