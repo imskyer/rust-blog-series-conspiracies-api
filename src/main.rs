@@ -17,56 +17,6 @@ struct WikiPage  {
     summary: String,
     content: String,
     background: String, 
-    incident: String, 
-    investigations: String, 
-}
-
-struct WikiRepo {
-    wiki: Wikipedia<wikipedia::http::default::Client>,
-}
-
-/// Handles interaction with the Wikipedia site
-impl WikiRepo {
-  /// get_page returns a WikiPage object that represents the page for the given title
-  fn get_page(self, title: String) -> Result<WikiPage, wikipedia::Error> {
-      let page = self.wiki.page_from_title(title.to_string());  
-      
-      match page.get_pageid() {
-        Err(e) => Err(e),
-        Ok(page_id) => {
-            // background can be None sometimes but I want to store an empty 
-            // string instead of some other value
-            let background = match page.get_section_content("background").unwrap_or_default()  {
-                Some(val) => val,
-                None => String::from("")
-            };
-            
-            // incidents can be None sometimes but I want to store an empty 
-            // string instead of some other value
-            let incident = match page.get_section_content("incident").unwrap_or_default() {
-                Some(val) => val,
-                None => String::from("")
-            };
-
-            // investigations can be None sometimes but I want to store an empty 
-            // string instead of some other value
-            let investigations = match page.get_section_content("investigations").unwrap() {
-                Some(val) => val,
-                None => String::from("")
-            };
-
-            Ok(WikiPage {
-                title: title, 
-                page_id: page_id,
-                summary: page.get_summary().unwrap(),
-                content: page.get_content().unwrap(),
-                background:  background, 
-                incident: incident, 
-                investigations: investigations, 
-            })
-        }
-      }
-  }
 }
 
 fn main() {
@@ -91,21 +41,46 @@ fn main() {
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
         
         // This gets the wiki client, which is an HTTP client. 
-        let _wiki = wikipedia::Wikipedia::<wikipedia::http::default::Client>::default();
-        // Retrieves the page data 
-        let _page = _wiki.page_from_title(title.to_string());
-        match _page.get_pageid() {
-            Err(e) => println!("ERROR There was a problem getting the page_id for {}: {}", title.to_string(), e),
-            Ok(page_id) => {
-                if page_id == "-1" {
-                    println!("404 Could not find a page with the title {}", title.to_string());
-                    process::exit(1);
-                } 
-                
-                println!("page: {:#?}", _page.get_links().unwrap().count());
-            }
-        }
-    
+        let _wiki = WikiRepo {
+            client: wikipedia::Wikipedia::<wikipedia::http::default::Client>::default(),
+        };
 
+        match _wiki.get_page(title.to_string()) {
+            Ok(p) => println!("title: {}\npage_id: {}\nSummary: {}\n", p.title, p.page_id, p.summary),
+            Err(e) => println!("ERROR: {}", e)
+        };
     } 
 }
+
+struct WikiRepo {
+    client: Wikipedia<wikipedia::http::default::Client>,
+}
+
+/// Handles interaction with the Wikipedia site
+impl WikiRepo {
+  /// get_page returns a WikiPage object that represents the page for the given title
+  fn get_page(self, title: String) -> Result<WikiPage, wikipedia::Error> {
+      let page = self.client.page_from_title(title.to_string());  
+      
+      match page.get_pageid() {
+        Err(e) => Err(e),
+        Ok(page_id) => {
+            // background can be None sometimes but I want to store an empty 
+            // string instead of some other value
+            let background = match page.get_section_content("background").unwrap()  {
+                Some(val) => val,
+                None => String::from("")
+            };
+            
+            Ok(WikiPage {
+                title: title, 
+                page_id: page_id,
+                summary: page.get_summary().unwrap(),
+                content: page.get_content().unwrap(),
+                background:  background, 
+            })
+        }
+      }
+  }
+}
+
