@@ -24,6 +24,6 @@ fn main() {
         }
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
         
-        // calling Wikipedia using the wikipedia crate will happen here
+        // Code for retrieving the wikipedia data goes here
     } 
 }
