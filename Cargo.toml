@@ -1,8 +1,8 @@
 [package]
-name = "conspiracies-api"
-version = "0.1.0"
+name = "conspiracies"
+version = "0.0.1"
 authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
 
 [dependencies]
 clap = "2.31.2"
-serde_json = "1.0.13"
+wikipedia = "0.3.1"
