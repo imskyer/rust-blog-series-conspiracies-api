@@ -50,7 +50,7 @@ impl WikiRepo {
 
             // investigations can be None sometimes but I want to store an empty 
             // string instead of some other value
-            let investigations = match page.get_section_content("investigations").unwrap_or_default() {
+            let investigations = match page.get_section_content("investigations").unwrap() {
                 Some(val) => val,
                 None => String::from("")
             };
