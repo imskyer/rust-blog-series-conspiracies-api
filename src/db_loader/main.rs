@@ -1,6 +1,8 @@
+
 // extern crate calls bring the crate into scope for this file
 extern crate clap; 
 extern crate wikipedia;
+extern crate conspiracies;
 
 // brings the App trait from the clap create into this scope
 // The use statements bring structs, enums, functions, etc 
@@ -10,14 +12,9 @@ extern crate wikipedia;
 //use clap::{App, Arg};
 use std::process;
 use wikipedia::{Wikipedia};
+use conspiracies::wiki::WikiPage;
 
-struct WikiPage  {
-    title: String, 
-    page_id: String,
-    summary: String,
-    content: String,
-    background: String, 
-}
+
 
 fn main() {
     let _matches = clap::App::new("conspiracies")
@@ -46,7 +43,7 @@ fn main() {
         };
 
         match _wiki.get_page(title.to_string()) {
-            Ok(p) => println!("title: {}\npage_id: {}\nSummary: {}\n", p.title, p.page_id, p.summary),
+            Ok(p) => println!("{:#?}", p),
             Err(e) => println!("ERROR: {}", e)
         };
     } 
@@ -72,13 +69,7 @@ impl WikiRepo {
                 None => String::from("")
             };
             
-            Ok(WikiPage {
-                title: title, 
-                page_id: page_id,
-                summary: page.get_summary().unwrap(),
-                content: page.get_content().unwrap(),
-                background:  background, 
-            })
+            Ok(WikiPage::new(title, page_id, page.get_summary().unwrap(), page.get_content().unwrap(), background))
         }
       }
   }
