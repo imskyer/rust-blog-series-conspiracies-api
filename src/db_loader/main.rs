@@ -1,9 +1,10 @@
 
 // extern crate calls bring the crate into scope for this file
+
+extern crate conspiracies;
 extern crate clap; 
 extern crate wikipedia;
-extern crate conspiracies;
-
+extern crate dotenv;
 // brings the App trait from the clap create into this scope
 // The use statements bring structs, enums, functions, etc 
 // so that you don't have to use their fully qualified names
@@ -11,10 +12,12 @@ extern crate conspiracies;
 // instead of clap::App::<fn name>
 //use clap::{App, Arg};
 use std::process;
+
 use wikipedia::{Wikipedia};
-use conspiracies::wiki::WikiPage;
-
-
+use conspiracies::wiki::{WikiPage, WikiRepo, get_page_links};
+use conspiracies::db;
+use dotenv::dotenv;
+use std::env;
 
 fn main() {
     let _matches = clap::App::new("conspiracies")
@@ -38,40 +41,31 @@ fn main() {
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
         
         // This gets the wiki client, which is an HTTP client. 
-        let _wiki = WikiRepo {
-            client: wikipedia::Wikipedia::<wikipedia::http::default::Client>::default(),
+        let c = wikipedia::Wikipedia::<wikipedia::http::default::Client>::default();
+        let wiki_repo = WikiRepo::new(&c) ;
+
+        match wiki_repo.get_page(title.to_string()) {
+            Err(e) => println!("ERROR: {}", e),
+            Ok(p) => {
+                // reads the .env file and adds any variables found there
+                // to the env vars in the 'real' env.
+                dotenv().ok();
+                let database_url = env::var("DATABASE_URL")
+                    .expect("DATABASE_URL must be set");
+                let conn = db::get_sqlite_connection(database_url);
+                match db::add_conspiracy(conn, p) {
+                    Err(e) => println!("INSERT ERROR: {}", e),
+                    Ok(_) => println!("Inserted the List Page, now getting links and fetchig pages")
+                }
+            }
         };
 
-        match _wiki.get_page(title.to_string()) {
-            Ok(p) => println!("{:#?}", p),
-            Err(e) => println!("ERROR: {}", e)
-        };
-    } 
-}
 
-struct WikiRepo {
-    client: Wikipedia<wikipedia::http::default::Client>,
-}
-
-/// Handles interaction with the Wikipedia site
-impl WikiRepo {
-  /// get_page returns a WikiPage object that represents the page for the given title
-  fn get_page(self, title: String) -> Result<WikiPage, wikipedia::Error> {
-      let page = self.client.page_from_title(title.to_string());  
-      
-      match page.get_pageid() {
-        Err(e) => Err(e),
-        Ok(page_id) => {
-            // background can be None sometimes but I want to store an empty 
-            // string instead of some other value
-            let background = match page.get_section_content("background").unwrap()  {
-                Some(val) => val,
-                None => String::from("")
-            };
-            
-            Ok(WikiPage::new(title, page_id, page.get_summary().unwrap(), page.get_content().unwrap(), background))
+        let p2 = c.page_from_title(title.to_string());
+        let links_iter = p2.get_links().expect("unable to get the links");
+        for (i, l) in links_iter.enumerate() {
+            println!("i:{} l: {}", i, l.title);
         }
-      }
-  }
+    } 
 }
 
