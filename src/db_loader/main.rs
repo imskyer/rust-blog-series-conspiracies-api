@@ -10,14 +10,12 @@ extern crate dotenv;
 // so that you don't have to use their fully qualified names
 // As an example the line below allows me to use App::<fn name>
 // instead of clap::App::<fn name>
-//use clap::{App, Arg};
 use std::process;
-
-use wikipedia::{Wikipedia};
-use conspiracies::wiki::{WikiPage, WikiRepo, get_page_links};
+use conspiracies::wiki::{WikiRepo,LinkProcessed};
 use conspiracies::db;
 use dotenv::dotenv;
 use std::env;
+//use wikipedia::http;
 
 fn main() {
     let _matches = clap::App::new("conspiracies")
@@ -31,6 +29,12 @@ fn main() {
             .help("A title of a wikipage to retrieve")
             .takes_value(true)
             .required(true))
+       .arg(clap::Arg::with_name("links")
+            .short("gl")
+            .long("get-links")
+            .help("Gets links to conspiracy pages and stores them in the db")
+            .takes_value(false)
+            .required(false))
        .get_matches(); 
 
     if let Some(title) = _matches.value_of("title")  {
@@ -39,33 +43,36 @@ fn main() {
             process::exit(1);
         }
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
-        
+
+        // reads the .env file and adds any variables found there
+        // to the env vars in the 'real' env.
+        dotenv().ok();
         // This gets the wiki client, which is an HTTP client. 
         let c = wikipedia::Wikipedia::<wikipedia::http::default::Client>::default();
-        let wiki_repo = WikiRepo::new(&c) ;
-
-        match wiki_repo.get_page(title.to_string()) {
-            Err(e) => println!("ERROR: {}", e),
-            Ok(p) => {
-                // reads the .env file and adds any variables found there
-                // to the env vars in the 'real' env.
-                dotenv().ok();
-                let database_url = env::var("DATABASE_URL")
-                    .expect("DATABASE_URL must be set");
-                let conn = db::get_sqlite_connection(database_url);
-                match db::add_conspiracy(conn, p) {
-                    Err(e) => println!("INSERT ERROR: {}", e),
-                    Ok(_) => println!("Inserted the List Page, now getting links and fetchig pages")
-                }
-            }
-        };
-
-
-        let p2 = c.page_from_title(title.to_string());
-        let links_iter = p2.get_links().expect("unable to get the links");
-        for (i, l) in links_iter.enumerate() {
-            println!("i:{} l: {}", i, l.title);
+        let database_url = env::var("DATABASE_URL")
+                .expect("DATABASE_URL must be set");
+        let conn = db::get_sqlite_connection(database_url);
+        
+        if _matches.is_present("get-links") {
+            WikiRepo::get_and_store_links(&c, title.to_string(), |link| {
+                match db::add_link_process(&conn, &link) {
+                    Err(e) => println!("SAVE ERROR: {} {}", e ,link.title),
+                    Ok(_) => println!("Added: {}", link.title)
+                };
+            });
         }
+
+        let links =  db::get_links_to_process(&conn, 100);
+        WikiRepo::get_conspiracies(&c, links, title.to_string(), |p2, categories| {
+            match db::add_conspiracy(&conn, &p2) {
+                Err(e) => println!("SAVE ERROR: {} {}", e ,p2.title),
+                Ok(_) => {
+                    let title = &p2.title;
+                    db::add_categories(&conn, categories).unwrap();
+                    db::mark_link_as_processed(&conn, title).expect(&format!("A problem occurred when marking the link '{}' as processed",title));
+                    println!("Added: {} {}", title, p2.page_id)
+                }
+            };
+        });
     } 
 }
-
