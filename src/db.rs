@@ -42,7 +42,7 @@ pub fn mark_link_as_processed(conn: &SqliteConnection, link_title: &str) ->Resul
     update.execute(conn)
 }
 
-pub fn get_links_to_process(conn: &SqliteConnection, num_links: i64) -> Vec<LinkProcessed> {
+pub fn get_links_to_process(conn: &SqliteConnection, num_links: i32) -> Vec<LinkProcessed> {
     let q_stmt = format!("SELECT title, processed FROM links_processed WHERE processed=0 limit {};", num_links);
     let query = sql::<(Text, Integer)>(&q_stmt);
     query.load::<LinkProcessed>(conn).expect("Can't query links_processed")

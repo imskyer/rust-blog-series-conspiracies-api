@@ -35,6 +35,12 @@ fn main() {
             .help("Gets links to conspiracy pages and stores them in the db")
             .takes_value(false)
             .required(false))
+        .arg(clap::Arg::with_name("page_count")
+            .short("pc")
+            .long("page-count")
+            .help("limits the number of pages to retrieve to the given number.")
+            .takes_value(true)
+            .required(false))
        .get_matches(); 
 
     if let Some(title) = _matches.value_of("title")  {
@@ -43,6 +49,12 @@ fn main() {
             process::exit(1);
         }
         println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
+
+        let mut batch_size = 60;
+        if let Some(page_count) = _matches.value_of("page_count") {
+            batch_size = page_count.trim().parse::<i32>().unwrap();
+            println!("fetching at most {} pages.", batch_size);
+        }
 
         // reads the .env file and adds any variables found there
         // to the env vars in the 'real' env.
@@ -62,10 +74,10 @@ fn main() {
             });
         }
 
-        let links =  db::get_links_to_process(&conn, 100);
+        let links =  db::get_links_to_process(&conn, batch_size);
         WikiRepo::get_conspiracies(&c, links, title.to_string(), |p2, categories| {
             match db::add_conspiracy(&conn, &p2) {
-                Err(e) => println!("SAVE ERROR: {} {}", e ,p2.title),
+                Err(e) => println!("SAVE ERROR: {} {} {}", e ,p2.title, p2.page_id),
                 Ok(_) => {
                     let title = &p2.title;
                     db::add_categories(&conn, categories).unwrap();

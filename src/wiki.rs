@@ -1,3 +1,4 @@
+extern crate chrono;
 //use diesel;
 use diesel::{Insertable};
 use diesel::deserialize::{FromSql};
@@ -7,6 +8,9 @@ use wikipedia::iter::Iter;
 use wikipedia::{Wikipedia, Page};
 use std::{process, thread, time};
 use rand::{Rng, thread_rng};
+use wiki::chrono::prelude::*;
+use self::chrono::{Local, DateTime, TimeZone};
+
 
 // I've added the derive debug so I can use println! to print it out
 #[derive(Insertable, Debug, Clone)]
@@ -68,9 +72,10 @@ impl WikiRepo {
         Ok(page_id) => {
             // background can be None sometimes but I want to store an empty 
             // string instead of some other value
-            let background = match page.get_section_content("background").unwrap()  {
-                Some(val) => val,
-                None => String::from("")
+            let mut background = "".to_string();
+            match page.get_section_content("background") {
+                Ok(bg) => {background = bg.unwrap_or_default();},
+                _ => ()
             };
             
             let summary = match page.get_summary() {
@@ -110,8 +115,15 @@ impl WikiRepo {
         // The save_action function is the closure I 
         Ok(seed_page) => {
             let mut categories: Vec<CategoryToPage> = Vec::new();
-            for cat in page.get_categories().unwrap().next() {
-                categories.push(CategoryToPage::new(&seed_page.page_id, cat.title));
+            let mut iter = page.get_categories().unwrap().map(|cat| {
+                CategoryToPage {
+                    page_id: page.get_pageid().unwrap().clone(),
+                    category: cat.title,
+                }
+            });
+
+            while let Some(c) = iter.next() {
+                categories.push(c)
             }
             save_action(seed_page, categories);
         }
@@ -145,7 +157,8 @@ impl WikiRepo {
                 // have that problem.
                 if i % 10  == 0 {
                     let num = thread_rng().gen_range(60, 240);
-                    println!("sleeping for {} seconds", num);
+                    let local: DateTime<Local> = Local::now(); 
+                    println!("sleeping for {} seconds starting at {}", num, local);
                     thread::sleep(time::Duration::from_secs(num));
                 }               
             }
