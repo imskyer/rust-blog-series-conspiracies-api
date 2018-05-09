@@ -1,19 +1,14 @@
 extern crate chrono;
-//use diesel;
-use diesel::{Insertable};
-use diesel::deserialize::{FromSql};
-use super::schema::{conspiracies, links_processed, categories_to_pages};
+
+use schema::{conspiracies, links_processed, categories_to_pages};
 use wikipedia;
-use wikipedia::iter::Iter;
-use wikipedia::{Wikipedia, Page};
-use std::{process, thread, time};
+use std::{thread, time};
 use rand::{Rng, thread_rng};
-use wiki::chrono::prelude::*;
-use self::chrono::{Local, DateTime, TimeZone};
+use self::chrono::{Local, DateTime};
 
 
 // I've added the derive debug so I can use println! to print it out
-#[derive(Insertable, Debug, Clone)]
+#[derive(Insertable, Debug)]
 #[table_name="conspiracies"]
 pub struct WikiPage  {
     pub title: String, 
@@ -35,7 +30,7 @@ impl WikiPage {
     }
 }
 
-#[derive(Insertable, Queryable, Debug, Clone, PartialEq)]
+#[derive(Insertable, Queryable, Debug)]
 #[table_name="links_processed"]
 pub struct LinkProcessed  {
     pub title: String, 
@@ -167,7 +162,7 @@ impl WikiRepo {
     }
   } 
 
-  pub fn get_and_store_links<'a, F>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String, save_action: F)
+  pub fn get_page_links<'a, F>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String, save_action: F)
         where F: Fn(LinkProcessed) {
         // This is here so I can grab the links from the listing page so I 
         // I can use the links to get the files
