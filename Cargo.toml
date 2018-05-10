@@ -7,6 +7,10 @@ authors = ["Rob Rowe <rrowe@foodlogiq.com>"]
 name = "db_loader"
 path = "src/db_loader/main.rs" 
 
+[[bin]]
+name = "conspiracies_api"
+path = "src/conspiracies_api/main.rs" 
+
 [dependencies]
 clap = "2.31.2"
 wikipedia = "0.3.1"
@@ -14,3 +18,5 @@ diesel = { version = "1.0.0", features = ["sqlite"] }
 dotenv = "0.9.0"
 rand = "0.5.0-pre.1"
 chrono = "0.4.2"
+actix-web = "0.6.2"
+actix = "0.5.6"
