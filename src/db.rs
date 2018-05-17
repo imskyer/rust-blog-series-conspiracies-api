@@ -1,4 +1,3 @@
-
 use diesel;
 use diesel::prelude::*;
 use diesel::types::{Bool, Integer, Text};
@@ -6,6 +5,35 @@ use diesel::expression::dsl::sql;
 use wiki::{WikiPage, LinkProcessed, CategoryToPage};
 use schema::{conspiracies, links_processed, categories_to_pages};
 use schema::links_processed::dsl::*;
+use diesel::r2d2::{ConnectionManager, Pool};
+use actix::prelude::*;
+use actix_web::*;
+use schema::conspiracies::dsl::*;
+pub struct DbExecutor(pub Pool<ConnectionManager<SqliteConnection>>);
+
+pub struct ListConspiracies;
+
+impl Actor for DbExecutor {
+    type Context = SyncContext<Self>;
+}
+
+impl Message for ListConspiracies {
+    type Result = Result<Vec<WikiPage>, Error>;
+}
+
+impl Handler<ListConspiracies> for DbExecutor {
+    type Result = Result<Vec<WikiPage>, Error>;
+
+    fn handle(&mut self, msg: ListConspiracies, _: &mut Self::Context) -> Self::Result {
+        let conn: &SqliteConnection = &self.0.get().unwrap();
+        let res = conspiracies::table
+        .load::<Vec<WikiPage>>(conn)
+                    .map_err(|_| error::ErrorInternalServerError("Error loading person"))?;
+        //russian_romances::table.find(1).first::<RussianRomance>(conn).expect("Unable to retrieve russian romance");
+        Ok(res[0])
+    }
+}
+
 
 /// adds a new record to the conspiracies table, returns QueryResult<usize>
 pub fn add_conspiracy(conn: &SqliteConnection, conspiracy: &WikiPage) -> QueryResult<usize> {

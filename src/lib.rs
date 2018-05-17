@@ -6,3 +6,6 @@ pub mod schema;
 extern crate wikipedia;
 extern crate rand;
 extern crate chrono;
+extern crate r2d2;
+extern crate actix;
+extern crate actix_web;
