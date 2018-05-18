@@ -8,7 +8,7 @@ use self::chrono::{Local, DateTime};
 
 
 // I've added the derive debug so I can use println! to print it out
-#[derive(Insertable, Debug, Queryable)]
+#[derive(Insertable, Debug, Queryable, Serialize)]
 #[table_name="conspiracies"]
 pub struct WikiPage  {
     pub title: String, 
