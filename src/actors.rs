@@ -41,8 +41,23 @@ impl Handler<Conspiracies> for DbExecutor {
    fn handle(&mut self, msg: Conspiracies, _: &mut Self::Context) -> Self::Result
     {
         db::get_conspiracies(&self.0, msg.page_num)
-        // let a = WikiPage::new("a".to_owned(), "1".to_owned(), "sum".to_owned(), "cont".to_owned(), "back".to_owned());
-        // let b = WikiPage::new("b".to_owned(), "2".to_owned(), "sum".to_owned(), "cont".to_owned(), "back".to_owned());
-        // Ok(vec![a, b])
+    }
+}
+
+
+pub struct Categories {
+    pub page_num: i64
+}
+
+impl Message for Categories {
+    type Result = Result<Vec<String>, String>;
+}
+
+impl Handler<Categories> for DbExecutor {
+   type Result = Result<Vec<String>, String>;
+
+   fn handle(&mut self, msg: Categories, _: &mut Self::Context) -> Self::Result
+    {
+        db::get_categories(&self.0, msg.page_num)
     }
 }

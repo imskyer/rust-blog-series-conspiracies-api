@@ -8,7 +8,7 @@ extern crate futures;
 
 use actix::{Addr,Syn};
 use actix::prelude::*;
-use conspiracies::actors::{Conspiracies, DbExecutor,GetConspiracy};
+use conspiracies::actors::{Categories, Conspiracies, DbExecutor,GetConspiracy};
 use actix_web::{http, middleware, App, AsyncResponder, FutureResponse, HttpRequest, HttpResponse, Path};
 use actix_web::server::HttpServer;
 use futures::Future;
@@ -19,13 +19,18 @@ struct State {
     db: Addr<Syn, DbExecutor>,
 }
 
-
-fn hi(req: HttpRequest) -> &'static str {
-      "The men in black are REAL!"
-}
-
-fn get_categories(req: HttpRequest) -> &'static str {
-    "This will eventually return a list of the conspiracy categories"
+fn get_categories(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
+    let page_num = req.query().get("page").unwrap_or("0").parse::<i64>().unwrap();
+    
+    req.state().db.send(Categories{page_num: page_num})
+      .from_err()
+      .and_then(|res| {
+          match res {
+              Ok(categories) => Ok(HttpResponse::Ok().json(categories)),
+              Err(_) => Ok(HttpResponse::InternalServerError().into())
+          }
+      })
+      .responder()
 }
 
 fn get_conspiracies(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
@@ -68,6 +73,7 @@ fn main() {
     // Start http server
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
+            .resource("/categories", |r| r.method(http::Method::GET).a(get_categories))
             .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))})
         .bind("127.0.0.1:8088").unwrap()

@@ -38,6 +38,16 @@ pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) 
     Ok(i)
 }
 
+pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<String>, String> {
+    use schema::conspiracies::dsl::*;
+    let page_count: i64 = 25;
+    let offset = page_count * page_number;
+
+    let q_stmt = format!("SELECT category FROM categories order by category LIMIT {} OFFSET {};", page_count, offset);
+    let query = sql::<(Text)>(&q_stmt);
+    Ok(query.load::<String>(conn).expect("Can't query links_processed"))
+}
+
 pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<WikiPage>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
