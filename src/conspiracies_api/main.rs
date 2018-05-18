@@ -8,7 +8,7 @@ extern crate futures;
 
 use actix::{Addr,Syn};
 use actix::prelude::*;
-use conspiracies::actors::{DbExecutor,GetConspiracy};
+use conspiracies::actors::{Conspiracies, DbExecutor,GetConspiracy};
 use actix_web::{http, middleware, App, AsyncResponder, FutureResponse, HttpRequest, HttpResponse, Path};
 use actix_web::server::HttpServer;
 use futures::Future;
@@ -28,24 +28,28 @@ fn get_categories(req: HttpRequest) -> &'static str {
     "This will eventually return a list of the conspiracy categories"
 }
 
-fn get_conspiracies(req: HttpRequest) -> &'static str {
-    "This will eventually be a paginated list"
+fn get_conspiracies(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
+    let page_num = req.query().get("page").unwrap_or("0").parse::<i64>().unwrap();
+    
+    req.state().db.send(Conspiracies{page_num: page_num})
+      .from_err()
+      .and_then(|res| {
+          match res {
+              Ok(conspiracies) => Ok(HttpResponse::Ok().json(conspiracies)),
+              Err(_) => Ok(HttpResponse::InternalServerError().into())
+          }
+      })
+      .responder()
 }
 
-// fn get_conspiracies_by_id(page_id: Path<(String)>) -> String {
-//     format!("This will eventually be the contents of a conspiracy: {}", page_id.into_inner())
-//}
-
 fn get_conspiracies_by_id(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
-    println!("Top of the get_conspiracies_by_id handler");
     let page_id = &req.match_info()["page_id"];
-    println!("page_id: {}", &page_id);
     // Send message to `DbExecutor` actor
     req.state().db.send(GetConspiracy{page_id: page_id.to_owned()})
         .from_err()
         .and_then(|res| {
             match res {
-                Ok(user) => Ok(HttpResponse::Ok().json(user)),
+                Ok(conspiracy) => Ok(HttpResponse::Ok().json(conspiracy)),
                 Err(_) => Ok(HttpResponse::InternalServerError().into())
             }
         })
@@ -64,6 +68,7 @@ fn main() {
     // Start http server
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
+            .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))})
         .bind("127.0.0.1:8088").unwrap()
         .start();

@@ -38,6 +38,16 @@ pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) 
     Ok(i)
 }
 
+pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<WikiPage>, String> {
+    use schema::conspiracies::dsl::*;
+    let page_count: i64 = 25;
+
+    match conspiracies.limit(25).offset(page_count * page_number).load::<WikiPage>(conn) {
+        Ok(c) => Ok(c),
+        Err(e) => Err(format!("ERROR: {}", e))
+    }
+}
+
 pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<WikiPage, String> {
     use schema::conspiracies::dsl::*;
     match conspiracies.filter(page_id.eq(id.to_string())).first::<WikiPage>(conn) {
