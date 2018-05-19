@@ -2,8 +2,8 @@ use diesel;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Integer, Text};
 use diesel::expression::dsl::sql;
-use wiki::{WikiPage, LinkProcessed, CategoryToPage};
-use schema::{conspiracies, categories_to_pages};
+use wiki::{WikiPage, LinkProcessed, CategoryToPage, Tag};
+use schema::{conspiracies, categories_to_pages, tags};
 use schema::links_processed::dsl::*;
 use actix_web::*;
 
@@ -38,6 +38,7 @@ pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) 
     Ok(i)
 }
 
+// Gets a paged list of their 
 pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<String>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
@@ -61,6 +62,17 @@ pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec
 pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<WikiPage, String> {
     use schema::conspiracies::dsl::*;
     match conspiracies.filter(page_id.eq(id.to_string())).first::<WikiPage>(conn) {
+        Ok(c) => Ok(c),
+        Err(e) => Err(format!("ERROR: {}", e))
+    }
+}
+
+pub fn get_tags(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Tag>, String> {
+    use schema::conspiracies::dsl::*;
+    let page_count: i64 = 25;
+    let offset = page_count * page_number;
+
+    match tags::table.limit(25).offset(page_count * page_number).load::<Tag>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }

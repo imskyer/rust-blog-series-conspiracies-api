@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use wiki::{WikiPage};
+use wiki::{WikiPage, Tag};
 use diesel::prelude::*;
 use db;
 
@@ -45,19 +45,34 @@ impl Handler<Conspiracies> for DbExecutor {
 }
 
 
-pub struct Categories {
+pub struct AddTag {
+    pub name: String
+}
+impl Message for AddTag {
+    type Result = Result<usize, String>;
+}
+
+impl Handler<AddTag> for DbExecutor {
+   type Result = Result<usize, String>;
+
+   fn handle(&mut self, msg: AddTag, _: &mut Self::Context) -> Self::Result
+    {
+        Ok(1)
+    }
+}
+pub struct Tags {
     pub page_num: i64
 }
 
-impl Message for Categories {
-    type Result = Result<Vec<String>, String>;
+impl Message for Tags {
+    type Result = Result<Vec<Tag>, String>;
 }
 
-impl Handler<Categories> for DbExecutor {
-   type Result = Result<Vec<String>, String>;
+impl Handler<Tags> for DbExecutor {
+   type Result = Result<Vec<Tag>, String>;
 
-   fn handle(&mut self, msg: Categories, _: &mut Self::Context) -> Self::Result
+   fn handle(&mut self, msg: Tags, _: &mut Self::Context) -> Self::Result
     {
-        db::get_categories(&self.0, msg.page_num)
+        db::get_tags(&self.0, msg.page_num)
     }
 }

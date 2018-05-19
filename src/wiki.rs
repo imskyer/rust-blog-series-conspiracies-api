@@ -1,6 +1,6 @@
 extern crate chrono;
 
-use schema::{conspiracies, links_processed, categories_to_pages};
+use schema::{conspiracies, links_processed, categories_to_pages, tags};
 use wikipedia;
 use std::{thread, time};
 use rand::{Rng, thread_rng};
@@ -37,12 +37,21 @@ pub struct LinkProcessed  {
     pub processed: i32,
 }
 
+#[derive(Insertable, Queryable, Debug, Serialize)]
+#[table_name="tags"]
+pub struct Tag {
+    id: i32,
+    pub name: String,
+    pub approved: i32
+}
+
 #[derive(Insertable, Debug)]
 #[table_name="categories_to_pages"]
 pub struct CategoryToPage {
     page_id: String,
     pub category: String,      
 }
+
 
 impl CategoryToPage {
     pub fn new(page_id: &str, category: String) -> CategoryToPage {
