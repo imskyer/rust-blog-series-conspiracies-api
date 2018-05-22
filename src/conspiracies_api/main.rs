@@ -65,6 +65,10 @@ fn get_conspiracies_by_id(req: HttpRequest<State>) -> Box<Future<Item=HttpRespon
         .responder()
 }
 
+fn index(req: HttpRequest<State>) -> &'static str {
+    "The men in black are REAL!"
+}
+
 fn main() {
     let sys = actix::System::new("conspiracies-api");
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -84,6 +88,7 @@ fn main() {
               r.route().filter(pred::Not(pred::Get()))
                   .f(|req| HttpResponse::MethodNotAllowed());
             })
+            .resource("/", |r| r.f(index))
             .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
             .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))})
