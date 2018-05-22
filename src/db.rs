@@ -38,7 +38,7 @@ pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) 
     Ok(i)
 }
 
-// Gets a paged list of their 
+/// Lists all of the available categories (Deprecated)
 pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<String>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
@@ -49,6 +49,7 @@ pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<S
     Ok(query.load::<String>(conn).expect("Can't query links_processed"))
 }
 
+/// Returns a Vec with at most 25 conspriacies for the given page_number.
 pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<WikiPage>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
@@ -59,6 +60,7 @@ pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec
     }
 }
 
+/// Retrieves a record for the given page_id from the conspiracies table 
 pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<WikiPage, String> {
     use schema::conspiracies::dsl::*;
     match conspiracies.filter(page_id.eq(id.to_string())).first::<WikiPage>(conn) {
@@ -67,6 +69,7 @@ pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<WikiPag
     }
 }
 
+/// Gets a Vec of the tags that are available
 pub fn get_tags(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Tag>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
@@ -78,12 +81,14 @@ pub fn get_tags(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Tag>, S
     }
 }
 
+/// Updates the record in the database to indicate that it has been processed
 pub fn mark_link_as_processed(conn: &SqliteConnection, link_title: &str) ->Result<usize, diesel::result::Error> {
     let u_stmt = format!("UPDATE links_processed SET processed=1 WHERE title='{}';", link_title.replace("'", "''"));
     let update = sql::<Bool>(&u_stmt);
     update.execute(conn)
 }
 
+/// gets a Vec of links that have yet to be processed and stored in the database
 pub fn get_links_to_process(conn: &SqliteConnection, num_links: i32) -> Vec<LinkProcessed> {
     let q_stmt = format!("SELECT title, processed FROM links_processed WHERE processed=0 limit {};", num_links);
     let query = sql::<(Text, Integer)>(&q_stmt);

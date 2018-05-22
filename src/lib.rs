@@ -7,7 +7,6 @@ pub mod actors;
 extern crate wikipedia;
 extern crate rand;
 extern crate chrono;
-extern crate r2d2;
 extern crate actix;
 extern crate actix_web;
 extern crate serde;
