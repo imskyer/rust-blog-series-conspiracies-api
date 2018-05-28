@@ -11,7 +11,6 @@ impl Actor for DbExecutor {
 
 pub struct GetConspiracy {
     pub page_id: String 
-
 }
 
 impl Message for GetConspiracy {

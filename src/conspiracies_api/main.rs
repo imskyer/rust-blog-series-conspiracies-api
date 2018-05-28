@@ -18,14 +18,16 @@ use futures::Future;
 use actix_web::Error;
 use actix_web::middleware::Logger;
 use diesel::prelude::*;
+
 /// This is state where we will store *DbExecutor* address.
 struct State {
     db: Addr<Syn, DbExecutor>,
 }
 
-fn get_tags(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
+/// Returns a paginated list of tags that are available
+fn get_tags(req: HttpRequest<State>) -> impl Future<Item=HttpResponse, Error=Error> {
     let page_num = req.query().get("page").unwrap_or("0").parse::<i64>().unwrap();
-    
+
     req.state().db.send(Tags{page_num: page_num})
       .from_err()
       .and_then(|res| {
@@ -37,9 +39,10 @@ fn get_tags(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Erro
       .responder()
 }
 
-fn get_conspiracies(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
+/// Returns a paginated list of conspriacies. IF no page size is given the default is 25
+fn get_conspiracies(req: HttpRequest<State>) -> impl Future<Item=HttpResponse, Error=Error> {
     let page_num = req.query().get("page").unwrap_or("0").parse::<i64>().unwrap();
-    
+
     req.state().db.send(Conspiracies{page_num: page_num})
       .from_err()
       .and_then(|res| {
@@ -51,15 +54,17 @@ fn get_conspiracies(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Er
       .responder()
 }
 
-fn get_conspiracies_by_id(req: HttpRequest<State>) -> Box<Future<Item=HttpResponse, Error=Error>> {
+/// returns the conspiracy by the given id
+fn get_conspiracies_by_id(req: HttpRequest<State>) -> impl Future<Item=HttpResponse, Error=Error> {
     let page_id = &req.match_info()["page_id"];
+
     // Send message to `DbExecutor` actor
     req.state().db.send(GetConspiracy{page_id: page_id.to_owned()})
         .from_err()
         .and_then(|res| {
             match res {
                 Ok(conspiracy) => Ok(HttpResponse::Ok().json(conspiracy)),
-                Err(_) => Ok(HttpResponse::InternalServerError().into())
+                Err(_) => Ok(HttpResponse::NotFound().into())
             }
         })
         .responder()
@@ -70,28 +75,27 @@ fn index(req: HttpRequest<State>) -> &'static str {
 }
 
 fn main() {
-    let sys = actix::System::new("conspiracies-api");
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
+    let sys = actix::System::new("conspiracies-api");
     // Start 3 parallel db executors
     let addr = SyncArbiter::start(3, || {
         DbExecutor(SqliteConnection::establish("database/conspiracies.sqlite3").unwrap())
     });
-
+ 
     // Start http server
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
             .middleware(Logger::default())
             .default_resource(|r| {
-              r.method(http::Method::GET).f(|req| HttpResponse::NotFound());
-              r.route().filter(pred::Not(pred::Get()))
-                  .f(|req| HttpResponse::MethodNotAllowed());
+               r.route().filter(pred::Not(pred::Get()))
+                   .f(|req| HttpResponse::MethodNotAllowed());
             })
-            .resource("/", |r| r.f(index))
+            .resource("/", |r| r.method(http::Method::GET).f(index))
+            .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
             .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
-            .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))
-            .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))})
+            .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))})
         .bind("127.0.0.1:8088").unwrap()
         .start();
 
