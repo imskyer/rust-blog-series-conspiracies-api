@@ -11,7 +11,7 @@ extern crate dotenv;
 // As an example the line below allows me to use App::<fn name>
 // instead of clap::App::<fn name>
 use std::process;
-use conspiracies::wiki::{WikiRepo,LinkProcessed};
+use conspiracies::wiki::{WikiRepo};
 use conspiracies::db;
 use dotenv::dotenv;
 use std::env;
@@ -48,8 +48,8 @@ fn main() {
             println!("Cannot search for an emtpy title!");
             process::exit(1);
         }
-        println!("The title was passed in: {} (Hopefully, this is a Wikipage title).", title);
-
+        
+        // get the batch size
         let mut batch_size = 60;
         if let Some(page_count) = _matches.value_of("page_count") {
             batch_size = page_count.trim().parse::<i32>().unwrap();
@@ -59,14 +59,17 @@ fn main() {
         // reads the .env file and adds any variables found there
         // to the env vars in the 'real' env.
         dotenv().ok();
+
         // This gets the wiki client, which is an HTTP client. 
         let c = wikipedia::Wikipedia::<wikipedia::http::default::Client>::default();
+
+        // Database connection 
         let database_url = env::var("DATABASE_URL")
                 .expect("DATABASE_URL must be set");
         let conn = db::get_sqlite_connection(database_url);
         
         if _matches.is_present("get-links") {
-            WikiRepo::get_and_store_links(&c, title.to_string(), |link| {
+            WikiRepo::get_page_links(&c, title.to_string(), |link| {
                 match db::add_link_process(&conn, &link) {
                     Err(e) => println!("SAVE ERROR: {} {}", e ,link.title),
                     Ok(_) => println!("Added: {}", link.title)

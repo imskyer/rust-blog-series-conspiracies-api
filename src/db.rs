@@ -6,21 +6,23 @@ use diesel::expression::dsl::sql;
 use wiki::{WikiPage, LinkProcessed, CategoryToPage};
 use schema::{conspiracies, links_processed, categories_to_pages};
 use schema::links_processed::dsl::*;
-/// adds a new record to the conspiracies table
+
+/// adds a new record to the conspiracies table, returns QueryResult<usize>
 pub fn add_conspiracy(conn: &SqliteConnection, conspiracy: &WikiPage) -> QueryResult<usize> {
     diesel::insert_into(conspiracies::table)
         .values(conspiracy)
         .execute(conn)
 }
 
-/// adds a new record to the conspiracies table
+/// adds a new record to the links_processed table, returns QueryResult<usize>
 pub fn add_link_process(conn: &SqliteConnection, link: &LinkProcessed) -> QueryResult<usize> {
     diesel::insert_into(links_processed)
         .values(link)
         .execute(conn)
 }
 
-/// adds a new record to the cateories_to_pages table
+/// adds a new record to the cateories_to_pages table, returns the number of categories inserted
+/// or an error string
 pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) -> Result<i32,String> {
     let mut i = 0;
     for cat_to_page in categories.into_iter() {
