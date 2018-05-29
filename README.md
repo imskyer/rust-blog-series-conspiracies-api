@@ -7,6 +7,7 @@ of the posts in this series.
 
 ## Posts
 
+
 * [Post #1 - Learning Rust - Conspiracies, Crates, and Structs](https://www.myprogrammingadventure.org/posts/learning-rust/learning-rust-p1-conspiracies-crates-and-structs/)  
     [[Start Branch](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p1-cmd-line-args)] [[End Branch](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p1-end)]
 * [Post #2 - Learning Rust - Conspiracies, Databases, and Diesel.rs](https://www.myprogrammingadventure.org/posts/learning-rust/learning-rust-p2-conspiracies-databases-and-dieselrs/)
