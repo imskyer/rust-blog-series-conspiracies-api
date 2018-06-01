@@ -16,6 +16,7 @@ use actix_web::{http, middleware, App, AsyncResponder, HttpRequest, HttpResponse
 use actix_web::server::HttpServer;
 use futures::Future;
 use actix_web::Error;
+use actix_web::Json;
 use actix_web::middleware::Logger;
 use diesel::prelude::*;
 
@@ -24,6 +25,14 @@ struct State {
     db: Addr<Syn, DbExecutor>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct NewTag {
+    name: String
+}
+
+fn add_tag(req: HttpRequest<State>, tag: Json<NewTag>) -> String { //impl Future<Item=HttpResponse, Error=Error> {
+    format!("payload: {:#?}", tag)
+}
 /// Returns a paginated list of tags that are available
 fn get_tags(req: HttpRequest<State>) -> impl Future<Item=HttpResponse, Error=Error> {
     let page_num = req.query().get("page").unwrap_or("0").parse::<i64>().unwrap();
@@ -85,16 +94,18 @@ fn main() {
     });
  
     // Start http server
+
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
             .middleware(Logger::default())
-            .default_resource(|r| {
-               r.route().filter(pred::Not(pred::Get()))
-                   .f(|req| HttpResponse::MethodNotAllowed());
-            })
+            // .default_resource(|r| {
+            //    r.route().filter(pred::Not(pred::Get()))
+            //        .f(|req| HttpResponse::MethodNotAllowed());
+            // })
             .resource("/", |r| r.method(http::Method::GET).f(index))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
-            .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
+            .resource("/tags", |r| r.method(http::Method::POST).with2(add_tag))
+            .resource("/tags?{page}", |r| r.method(http::Method::GET).a(get_tags))
             .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))})
         .bind("127.0.0.1:8088").unwrap()
         .start();
