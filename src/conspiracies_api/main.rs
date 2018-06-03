@@ -11,7 +11,11 @@ extern crate serde_derive;
 
 use actix::{Addr,Syn};
 use actix::prelude::*;
-use conspiracies::actors::{AddTag, Conspiracies, DbExecutor,GetConspiracy, Tags};
+use conspiracies::actors::{
+    tags::{AddTag, Tags}, 
+    conspiracies::*, 
+    db_executor::*,
+};
 use actix_web::{http, middleware, App, AsyncResponder, HttpRequest, HttpResponse, pred};
 use actix_web::server::HttpServer;
 use futures::Future;
@@ -107,10 +111,6 @@ fn main() {
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
             .middleware(Logger::default())
-            // .default_resource(|r| {
-            //    r.route().filter(pred::Not(pred::Get()))
-            //        .f(|req| HttpResponse::MethodNotAllowed());
-            // })
             .resource("/", |r| r.method(http::Method::GET).f(index))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
             .resource("/tags/new", |r| r.method(http::Method::POST).with(add_tag))

@@ -1,74 +1,18 @@
 extern crate chrono;
 
-use schema::{conspiracies, links_processed, categories_to_pages, tags};
 use wikipedia;
 use std::{thread, time};
 use rand::{Rng, thread_rng};
 use self::chrono::{Local, DateTime};
-
-
-// I've added the derive debug so I can use println! to print it out
-#[derive(Insertable, Debug, Queryable, Serialize)]
-#[table_name="conspiracies"]
-pub struct WikiPage  {
-    pub title: String, 
-    pub page_id: String,
-    summary: String,
-    content: String,
-    background: String, 
-}
-
-impl WikiPage {
-    pub fn new(title: String, page_id: String, summary: String, content: String, background: String) -> WikiPage {
-        WikiPage{
-            title: title,
-            page_id: page_id,
-            summary: summary,
-            content: content,
-            background: background,
-        }
-    }
-}
-
-#[derive(Insertable, Queryable, Debug)]
-#[table_name="links_processed"]
-pub struct LinkProcessed  {
-    pub title: String, 
-    pub processed: i32,
-}
-
-#[derive(Insertable, Queryable, Debug, Serialize)]
-#[table_name="tags"]
-pub struct Tag {
-    id: i32,
-    pub name: String,
-    pub approved: i32
-}
-
-#[derive(Insertable, Debug)]
-#[table_name="categories_to_pages"]
-pub struct CategoryToPage {
-    page_id: String,
-    pub category: String,      
-}
-
-
-impl CategoryToPage {
-    pub fn new(page_id: &str, category: String) -> CategoryToPage {
-        CategoryToPage {
-            page_id: page_id.to_string(),
-            category: category,
-        }
-    }
-}
+use models::{CategoryToPage, Conspiracy, LinkProcessed};
 
 pub struct WikiRepo;
 
 /// Handles interaction with the Wikipedia site
 impl WikiRepo {
   
-  /// get_page returns a WikiPage object that represents the page for the given title
-  pub fn get_page<'a>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String) -> Result<WikiPage, wikipedia::Error> {
+  /// get_page returns a Conspiracy object that represents the page for the given title
+  pub fn get_page<'a>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String) -> Result<Conspiracy, wikipedia::Error> {
       let page = client.page_from_title(title.to_string());  
       
       match page.get_pageid() {
@@ -98,21 +42,21 @@ impl WikiRepo {
                 }
             };
 
-            Ok(WikiPage::new(title.to_string(), page_id, summary, content, background))
+            Ok(Conspiracy::new(title.to_string(), page_id, summary, content, background))
         }
       }
   }
   // get_conspiracies takes a wikipedia conection, the title of the 'seed page' and an anonymous function that takes one parameter,
-  // a WikiPage object.  The function is responsible for making the call to the db to save the conspiracy to the database.  The 
-  // where F phrase says that any function that takes a WikiPage as a parameter is a valid type for F
+  // a Conspiracy object.  The function is responsible for making the call to the db to save the conspiracy to the database.  The 
+  // where F phrase says that any function that takes a Conspiracy as a parameter is a valid type for F
   pub fn get_conspiracies<'a, F>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, links: Vec<LinkProcessed>, title: String, save_action: F) 
-    where F: Fn(WikiPage, Vec<CategoryToPage>) {
+    where F: Fn(Conspiracy, Vec<CategoryToPage>) {
     // This is here so I can grab the links from the listing page so I 
     // I can use the links to get the files
     let page = client.page_from_title(title.to_string()); 
     
     
-    // Now I'm going to create a WikiPage object for the
+    // Now I'm going to create a Conspiracy object for the
     // Listing page so I can add it to the database
     match WikiRepo::get_page(client, title) {
         Err(e) => println!("SEED ERR: {}", e),

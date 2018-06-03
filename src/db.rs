@@ -2,15 +2,14 @@ use diesel;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Integer, Text};
 use diesel::expression::dsl::sql;
-use models;
-use wiki::{WikiPage, LinkProcessed, CategoryToPage, Tag};
+use models::{Conspiracy, CategoryToPage, LinkProcessed, NewTag, Tag};
 use schema::{conspiracies, categories_to_pages, tags};
 use schema::links_processed::dsl::*;
 use actix_web::*;
 
 
 /// adds a new record to the conspiracies table, returns QueryResult<usize>
-pub fn add_conspiracy(conn: &SqliteConnection, conspiracy: &WikiPage) -> QueryResult<usize> {
+pub fn add_conspiracy(conn: &SqliteConnection, conspiracy: &Conspiracy) -> QueryResult<usize> {
     diesel::insert_into(conspiracies::table)
         .values(conspiracy)
         .execute(conn)
@@ -24,7 +23,7 @@ pub fn add_link_process(conn: &SqliteConnection, link: &LinkProcessed) -> QueryR
 }
 
 /// adds a new record to the conspiracies table, returns QueryResult<usize>
-pub fn add_tag(conn: &SqliteConnection, new_tag: models::NewTag) -> QueryResult<usize> {
+pub fn add_tag(conn: &SqliteConnection, new_tag: NewTag) -> QueryResult<usize> {
     diesel::insert_into(tags::table)
         .values(new_tag)
         .execute(conn)
@@ -60,20 +59,20 @@ pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<S
 }
 
 /// Returns a Vec with at most 25 conspriacies for the given page_number.
-pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<WikiPage>, String> {
+pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Conspiracy>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
 
-    match conspiracies.limit(25).offset(page_count * page_number).load::<WikiPage>(conn) {
+    match conspiracies.limit(25).offset(page_count * page_number).load::<Conspiracy>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }
 }
 
 /// Retrieves a record for the given page_id from the conspiracies table 
-pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<WikiPage, String> {
+pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<Conspiracy, String> {
     use schema::conspiracies::dsl::*;
-    match conspiracies.filter(page_id.eq(id.to_string())).first::<WikiPage>(conn) {
+    match conspiracies.filter(page_id.eq(id.to_string())).first::<Conspiracy>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }
