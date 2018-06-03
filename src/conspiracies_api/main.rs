@@ -11,7 +11,7 @@ extern crate serde_derive;
 
 use actix::{Addr,Syn};
 use actix::prelude::*;
-use conspiracies::actors::{Conspiracies, DbExecutor,GetConspiracy, Tags};
+use conspiracies::actors::{AddTag, Conspiracies, DbExecutor,GetConspiracy, Tags};
 use actix_web::{http, middleware, App, AsyncResponder, HttpRequest, HttpResponse, pred};
 use actix_web::server::HttpServer;
 use futures::Future;
@@ -19,19 +19,28 @@ use actix_web::Error;
 use actix_web::Json;
 use actix_web::middleware::Logger;
 use diesel::prelude::*;
+use conspiracies::models;
 
 /// This is state where we will store *DbExecutor* address.
 struct State {
     db: Addr<Syn, DbExecutor>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct NewTag {
-    name: String
-}
 
-fn add_tag(req: HttpRequest<State>, tag: Json<NewTag>) -> String { //impl Future<Item=HttpResponse, Error=Error> {
-    format!("payload: {:#?}", tag)
+//(query, json): (Query<..>, Json<MyStruct)
+fn add_tag((req, tag): (HttpRequest<State>, Json<models::NewTag>)) -> Box<Future<Item=HttpResponse, Error=Error>> {
+    req.state().db.send(AddTag{tag: models::NewTag::new_tag(tag.name.to_owned())})
+      .from_err()
+      .and_then(|res| {
+          match res {
+              Ok(i) => Ok(HttpResponse::Ok().json(i)),
+              Err(e) => {
+                  println!("add_tag error: {}", e);
+                  Ok(HttpResponse::InternalServerError().into())
+              }
+          }
+      })
+      .responder()
 }
 /// Returns a paginated list of tags that are available
 fn get_tags(req: HttpRequest<State>) -> impl Future<Item=HttpResponse, Error=Error> {
@@ -104,8 +113,8 @@ fn main() {
             // })
             .resource("/", |r| r.method(http::Method::GET).f(index))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
-            .resource("/tags", |r| r.method(http::Method::POST).with2(add_tag))
-            .resource("/tags?{page}", |r| r.method(http::Method::GET).a(get_tags))
+            .resource("/tags/new", |r| r.method(http::Method::POST).with(add_tag))
+            .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
             .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))})
         .bind("127.0.0.1:8088").unwrap()
         .start();

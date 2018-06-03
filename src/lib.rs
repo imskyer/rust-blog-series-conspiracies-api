@@ -1,7 +1,8 @@
-pub mod wiki;
-pub mod db;
-pub mod schema;
 pub mod actors;
+pub mod db;
+pub mod models;
+pub mod schema;
+pub mod wiki;
 
 #[macro_use] extern crate diesel;
 extern crate wikipedia;

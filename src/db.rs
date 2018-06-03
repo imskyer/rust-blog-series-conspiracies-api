@@ -2,10 +2,12 @@ use diesel;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Integer, Text};
 use diesel::expression::dsl::sql;
+use models;
 use wiki::{WikiPage, LinkProcessed, CategoryToPage, Tag};
 use schema::{conspiracies, categories_to_pages, tags};
 use schema::links_processed::dsl::*;
 use actix_web::*;
+
 
 /// adds a new record to the conspiracies table, returns QueryResult<usize>
 pub fn add_conspiracy(conn: &SqliteConnection, conspiracy: &WikiPage) -> QueryResult<usize> {
@@ -21,6 +23,14 @@ pub fn add_link_process(conn: &SqliteConnection, link: &LinkProcessed) -> QueryR
         .execute(conn)
 }
 
+/// adds a new record to the conspiracies table, returns QueryResult<usize>
+pub fn add_tag(conn: &SqliteConnection, new_tag: models::NewTag) -> QueryResult<usize> {
+    diesel::insert_into(tags::table)
+        .values(new_tag)
+        .execute(conn)
+}
+
+/// This needs to go away
 /// adds a new record to the cateories_to_pages table, returns the number of categories inserted
 /// or an error string
 pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) -> Result<i32,String> {
