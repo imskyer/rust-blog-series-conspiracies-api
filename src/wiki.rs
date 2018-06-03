@@ -4,7 +4,7 @@ use wikipedia;
 use std::{thread, time};
 use rand::{Rng, thread_rng};
 use self::chrono::{Local, DateTime};
-use models::{CategoryToPage, Conspiracy, LinkProcessed};
+use models::{Conspiracy, LinkProcessed};
 
 pub struct WikiRepo;
 
@@ -50,7 +50,7 @@ impl WikiRepo {
   // a Conspiracy object.  The function is responsible for making the call to the db to save the conspiracy to the database.  The 
   // where F phrase says that any function that takes a Conspiracy as a parameter is a valid type for F
   pub fn get_conspiracies<'a, F>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, links: Vec<LinkProcessed>, title: String, save_action: F) 
-    where F: Fn(Conspiracy, Vec<CategoryToPage>) {
+    where F: Fn(Conspiracy) {
     // This is here so I can grab the links from the listing page so I 
     // I can use the links to get the files
     let page = client.page_from_title(title.to_string()); 
@@ -62,18 +62,18 @@ impl WikiRepo {
         Err(e) => println!("SEED ERR: {}", e),
         // The save_action function is the closure I 
         Ok(seed_page) => {
-            let mut categories: Vec<CategoryToPage> = Vec::new();
-            let mut iter = page.get_categories().unwrap().map(|cat| {
-                CategoryToPage {
-                    page_id: page.get_pageid().unwrap().clone(),
-                    category: cat.title,
-                }
-            });
+            // let mut categories: Vec<CategoryToPage> = Vec::new();
+            // let mut iter = page.get_categories().unwrap().map(|cat| {
+            //     CategoryToPage {
+            //         page_id: page.get_pageid().unwrap().clone(),
+            //         category: cat.title,
+            //     }
+            // });
 
-            while let Some(c) = iter.next() {
-                categories.push(c)
-            }
-            save_action(seed_page, categories);
+            // while let Some(c) = iter.next() {
+            //     categories.push(c)
+            // }
+            save_action(seed_page); //, categories);
         }
     };
 
@@ -86,19 +86,19 @@ impl WikiRepo {
         match WikiRepo::get_page(client, link.title) {
             Err(e) => println!("SAVING ERROR: {}", e),
             Ok(p2) => {
-                let page_id = p2.page_id.clone();
-                let mut categories: Vec<CategoryToPage> = Vec::new();
-                let mut iter = page.get_categories().unwrap().map(|cat| {
-                    CategoryToPage {
-                        page_id: page_id.clone(),
-                        category: cat.title,
-                    }
-                });
+                //let page_id = p2.page_id.clone();
+                // let mut categories: Vec<CategoryToPage> = Vec::new();
+                // let mut iter = page.get_categories().unwrap().map(|cat| {
+                //     CategoryToPage {
+                //         page_id: page_id.clone(),
+                //         category: cat.title,
+                //     }
+                // });
 
-                while let Some(c) = iter.next() {
-                    categories.push(c)
-                }
-                save_action(p2, categories);
+                // while let Some(c) = iter.next() {
+                //     categories.push(c)
+                // }
+                save_action(p2);
                 // I added the sleep code to slow down my requests
                 // it appeared as if I was getting denied because of 
                 // the frequency of my calls but after adding this I didn't

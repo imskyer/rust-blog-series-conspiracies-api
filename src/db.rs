@@ -2,8 +2,8 @@ use diesel;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Integer, Text};
 use diesel::expression::dsl::sql;
-use models::{Conspiracy, CategoryToPage, LinkProcessed, NewTag, Tag};
-use schema::{conspiracies, categories_to_pages, tags};
+use models::{Conspiracy, ConspiracyTag, LinkProcessed, NewTag, Tag};
+use schema::{conspiracies, conspiracy_tags, tags};
 use schema::links_processed::dsl::*;
 use actix_web::*;
 
@@ -32,19 +32,10 @@ pub fn add_tag(conn: &SqliteConnection, new_tag: NewTag) -> QueryResult<usize> {
 /// This needs to go away
 /// adds a new record to the cateories_to_pages table, returns the number of categories inserted
 /// or an error string
-pub fn add_categories(conn: &SqliteConnection, categories: Vec<CategoryToPage>) -> Result<i32,String> {
-    let mut i = 0;
-    for cat_to_page in categories.into_iter() {
-        match diesel::insert_into(categories_to_pages::table)
-            .values(cat_to_page)
-            .execute(conn) {
-          Err(e) => println!("ERROR ADDING CATEGORY {}", e),
-          Ok(_) => i += 1
-        };
-        
-    }
-
-    Ok(i)
+pub fn tag_conspiracy(conn: &SqliteConnection, tagged_conspiracy: ConspiracyTag) -> QueryResult<usize> {
+    diesel::insert_into(conspiracy_tags::table)
+        .values(tagged_conspiracy)
+        .execute(conn)
 }
 
 /// Lists all of the available categories (Deprecated)

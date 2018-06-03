@@ -1,4 +1,4 @@
-use schema::{categories_to_pages, conspiracies, links_processed, tags};
+use schema::{conspiracy_tags, conspiracies, links_processed, tags};
 
 #[derive(Insertable, Queryable, Debug)]
 #[table_name="links_processed"]
@@ -16,18 +16,22 @@ pub struct Tag {
 }
 
 #[derive(Insertable, Debug)]
-#[table_name="categories_to_pages"]
-pub struct CategoryToPage {
-    pub page_id: String,
-    pub category: String,      
+#[table_name="conspiracy_tags"]
+pub struct ConspiracyTag {
+    pub conspiracy_id: String,
+    pub conspiracy_title: String,      
+    pub tag_id: i32,
+    pub tag_name: String
 }
 
 
-impl CategoryToPage {
-    pub fn new(page_id: &str, category: String) -> CategoryToPage {
-        CategoryToPage {
-            page_id: page_id.to_string(),
-            category: category,
+impl ConspiracyTag {
+    pub fn new(conspiracy_id: String, conspiracy_title: String, tag_id: i32, tag_name: String) -> ConspiracyTag {
+        ConspiracyTag {
+            conspiracy_id: conspiracy_id,
+            conspiracy_title: conspiracy_title,
+            tag_id: tag_id,
+            tag_name: tag_name,
         }
     }
 }
