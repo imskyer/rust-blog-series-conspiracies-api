@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use db;
 use diesel::prelude::*;
-use models::{Conspiracy};
+use models::{Conspiracy, ConspiracyTag};
 use super::db_executor::{DbExecutor};
 // Message for returning a paged list of conspiracies
 pub struct Conspiracies {
@@ -37,5 +37,25 @@ impl Handler<GetConspiracy> for DbExecutor {
    fn handle(&mut self, msg: GetConspiracy, _: &mut Self::Context) -> Self::Result
     {
         db::get_conspiracy_by_id(&self.0, &msg.page_id)
+    }
+}
+
+pub struct TagConspiracy {
+    pub tag: ConspiracyTag 
+}
+
+impl Message for TagConspiracy {
+    type Result = Result<usize, String>;
+}
+
+impl Handler<TagConspiracy> for DbExecutor {
+   type Result = Result<usize, String>;
+
+   fn handle(&mut self, msg: TagConspiracy, _: &mut Self::Context) -> Self::Result
+    {
+        match db::tag_conspiracy(&self.0, msg.tag) {
+            Ok(u) => Ok(u),
+            Err(e) => Err(format!("tag_conspiracy error: {}", e))
+        }
     }
 }

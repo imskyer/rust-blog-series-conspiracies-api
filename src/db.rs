@@ -38,23 +38,12 @@ pub fn tag_conspiracy(conn: &SqliteConnection, tagged_conspiracy: ConspiracyTag)
         .execute(conn)
 }
 
-/// Lists all of the available categories (Deprecated)
-pub fn get_categories(conn: &SqliteConnection, page_number: i64) -> Result<Vec<String>, String> {
-    use schema::conspiracies::dsl::*;
-    let page_count: i64 = 25;
-    let offset = page_count * page_number;
-
-    let q_stmt = format!("SELECT category FROM categories order by category LIMIT {} OFFSET {};", page_count, offset);
-    let query = sql::<(Text)>(&q_stmt);
-    Ok(query.load::<String>(conn).expect("Can't query links_processed"))
-}
-
 /// Returns a Vec with at most 25 conspriacies for the given page_number.
 pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Conspiracy>, String> {
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
 
-    match conspiracies.limit(25).offset(page_count * page_number).load::<Conspiracy>(conn) {
+    match conspiracies.limit(page_count).offset(page_count * page_number).load::<Conspiracy>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }

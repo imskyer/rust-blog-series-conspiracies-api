@@ -15,7 +15,7 @@ pub struct Tag {
     pub approved: i32
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Insertable, Queryable, Deserialize, Serialize, Debug)]
 #[table_name="conspiracy_tags"]
 pub struct ConspiracyTag {
     pub conspiracy_id: String,

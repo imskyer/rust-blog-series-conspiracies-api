@@ -16,7 +16,7 @@ use conspiracies::actors::{
     conspiracies::*, 
     db_executor::*,
 };
-use actix_web::{http, middleware, App, AsyncResponder, HttpRequest, HttpResponse, pred};
+use actix_web::{http, App, AsyncResponder, HttpRequest, HttpResponse};
 use actix_web::server::HttpServer;
 use futures::Future;
 use actix_web::Error;
@@ -92,7 +92,25 @@ fn get_conspiracies_by_id(req: HttpRequest<State>) -> impl Future<Item=HttpRespo
         .responder()
 }
 
-fn index(req: HttpRequest<State>) -> &'static str {
+//(query, json): (Query<..>, Json<MyStruct)
+fn tag_conspiracy((req, tag): (HttpRequest<State>, Json<models::ConspiracyTag>)) -> Box<Future<Item=HttpResponse, Error=Error>> {
+    
+    req.state().db.send(TagConspiracy{tag: tag.into_inner()})
+      .from_err()
+      .and_then(|res| {
+          match res {
+              Ok(i) => Ok(HttpResponse::Ok().json(i)),
+              Err(e) => {
+                  println!("tag_conspiracy error: {}", e);
+                  Ok(HttpResponse::InternalServerError().into())
+              }
+          }
+      })
+      .responder()
+}
+
+
+fn index(_req: HttpRequest<State>) -> &'static str {
     "The men in black are REAL!"
 }
 
@@ -113,6 +131,7 @@ fn main() {
             .middleware(Logger::default())
             .resource("/", |r| r.method(http::Method::GET).f(index))
             .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
+            .resource("/conspiracies/{page_id}/tag", |r| r.method(http::Method::POST).with(tag_conspiracy))
             .resource("/tags/new", |r| r.method(http::Method::POST).with(add_tag))
             .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
             .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))})

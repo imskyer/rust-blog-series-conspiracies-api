@@ -8,8 +8,8 @@ table! {
 
 table! {
     conspiracies (page_id) {
-        page_id -> Text,
         title -> Text,
+        page_id -> Text,
         summary -> Text,
         content -> Text,
         background -> Text,
