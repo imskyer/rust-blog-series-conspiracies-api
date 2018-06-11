@@ -11,10 +11,6 @@ path = "src/db_loader/main.rs"
 name = "conspiracies_api"
 path = "src/conspiracies_api/main.rs" 
 
-[[bin]]
-name = "tui_admin"
-path = "src/tui_admin/main.rs" 
-
 [dependencies]
 actix = "0.5.6"
 actix-web = "0.6.10"

@@ -30,10 +30,8 @@ struct State {
     db: Addr<Syn, DbExecutor>,
 }
 
-
-//(query, json): (Query<..>, Json<MyStruct)
 fn add_tag((req, tag): (HttpRequest<State>, Json<models::NewTag>)) -> Box<Future<Item=HttpResponse, Error=Error>> {
-    req.state().db.send(AddTag{tag: models::NewTag::new_tag(tag.name.to_owned())})
+    req.state().db.send(AddTag{tag: tag.into_inner()})
       .from_err()
       .and_then(|res| {
           match res {
@@ -92,10 +90,9 @@ fn get_conspiracies_by_id(req: HttpRequest<State>) -> impl Future<Item=HttpRespo
         .responder()
 }
 
-//(query, json): (Query<..>, Json<MyStruct)
-fn tag_conspiracy((req, tag): (HttpRequest<State>, Json<models::ConspiracyTag>)) -> Box<Future<Item=HttpResponse, Error=Error>> {
+fn tag_conspiracy((req, conspiracy_tag): (HttpRequest<State>, Json<models::ConspiracyTag>)) -> Box<Future<Item=HttpResponse, Error=Error>> {
     
-    req.state().db.send(TagConspiracy{tag: tag.into_inner()})
+    req.state().db.send(TagConspiracy{tag: conspiracy_tag.into_inner()})
       .from_err()
       .and_then(|res| {
           match res {
