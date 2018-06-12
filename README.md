@@ -10,4 +10,3 @@ The code in this repository is part of a blog series that I am writing as I lear
  [[code](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p2-diesel)]
 * [Post #3 - Learning Rust - Conspiracies, Dissemination, and REST APIs](https://www.myprogrammingadventure.org/posts/learning-rust/learning-rust-p3-conspiracies-dissemination-and-rest-apis/)
  [[code](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p3-end)]
-
