@@ -1,65 +1,18 @@
 extern crate chrono;
 
-use schema::{conspiracies, links_processed, categories_to_pages};
 use wikipedia;
 use std::{thread, time};
 use rand::{Rng, thread_rng};
 use self::chrono::{Local, DateTime};
-
-
-// I've added the derive debug so I can use println! to print it out
-#[derive(Insertable, Debug)]
-#[table_name="conspiracies"]
-pub struct WikiPage  {
-    pub title: String, 
-    pub page_id: String,
-    summary: String,
-    content: String,
-    background: String, 
-}
-
-impl WikiPage {
-    pub fn new(title: String, page_id: String, summary: String, content: String, background: String) -> WikiPage {
-        WikiPage{
-            title: title,
-            page_id: page_id,
-            summary: summary,
-            content: content,
-            background: background,
-        }
-    }
-}
-
-#[derive(Insertable, Queryable, Debug)]
-#[table_name="links_processed"]
-pub struct LinkProcessed  {
-    pub title: String, 
-    pub processed: i32,
-}
-
-#[derive(Insertable, Debug)]
-#[table_name="categories_to_pages"]
-pub struct CategoryToPage {
-    page_id: String,
-    pub category: String,      
-}
-
-impl CategoryToPage {
-    pub fn new(page_id: &str, category: String) -> CategoryToPage {
-        CategoryToPage {
-            page_id: page_id.to_string(),
-            category: category,
-        }
-    }
-}
+use models::{Conspiracy, LinkProcessed};
 
 pub struct WikiRepo;
 
 /// Handles interaction with the Wikipedia site
 impl WikiRepo {
   
-  /// get_page returns a WikiPage object that represents the page for the given title
-  pub fn get_page<'a>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String) -> Result<WikiPage, wikipedia::Error> {
+  /// get_page returns a Conspiracy object that represents the page for the given title
+  pub fn get_page<'a>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, title: String) -> Result<Conspiracy, wikipedia::Error> {
       let page = client.page_from_title(title.to_string());  
       
       match page.get_pageid() {
@@ -89,38 +42,23 @@ impl WikiRepo {
                 }
             };
 
-            Ok(WikiPage::new(title.to_string(), page_id, summary, content, background))
+            Ok(Conspiracy::new(title.to_string(), page_id, summary, content, background))
         }
       }
   }
   // get_conspiracies takes a wikipedia conection, the title of the 'seed page' and an anonymous function that takes one parameter,
-  // a WikiPage object.  The function is responsible for making the call to the db to save the conspiracy to the database.  The 
-  // where F phrase says that any function that takes a WikiPage as a parameter is a valid type for F
+  // a Conspiracy object.  The function is responsible for making the call to the db to save the conspiracy to the database.  The 
+  // where F phrase says that any function that takes a Conspiracy as a parameter is a valid type for F
   pub fn get_conspiracies<'a, F>(client: &'a wikipedia::Wikipedia::<wikipedia::http::default::Client>, links: Vec<LinkProcessed>, title: String, save_action: F) 
-    where F: Fn(WikiPage, Vec<CategoryToPage>) {
-    // This is here so I can grab the links from the listing page so I 
-    // I can use the links to get the files
-    let page = client.page_from_title(title.to_string()); 
+    where F: Fn(Conspiracy) {
     
-    
-    // Now I'm going to create a WikiPage object for the
+    // Now I'm going to create a Conspiracy object for the
     // Listing page so I can add it to the database
     match WikiRepo::get_page(client, title) {
         Err(e) => println!("SEED ERR: {}", e),
         // The save_action function is the closure I 
         Ok(seed_page) => {
-            let mut categories: Vec<CategoryToPage> = Vec::new();
-            let mut iter = page.get_categories().unwrap().map(|cat| {
-                CategoryToPage {
-                    page_id: page.get_pageid().unwrap().clone(),
-                    category: cat.title,
-                }
-            });
-
-            while let Some(c) = iter.next() {
-                categories.push(c)
-            }
-            save_action(seed_page, categories);
+            save_action(seed_page); //, categories);
         }
     };
 
@@ -133,19 +71,7 @@ impl WikiRepo {
         match WikiRepo::get_page(client, link.title) {
             Err(e) => println!("SAVING ERROR: {}", e),
             Ok(p2) => {
-                let page_id = p2.page_id.clone();
-                let mut categories: Vec<CategoryToPage> = Vec::new();
-                let mut iter = page.get_categories().unwrap().map(|cat| {
-                    CategoryToPage {
-                        page_id: page_id.clone(),
-                        category: cat.title,
-                    }
-                });
-
-                while let Some(c) = iter.next() {
-                    categories.push(c)
-                }
-                save_action(p2, categories);
+                save_action(p2);
                 // I added the sleep code to slow down my requests
                 // it appeared as if I was getting denied because of 
                 // the frequency of my calls but after adding this I didn't

@@ -78,12 +78,11 @@ fn main() {
         }
 
         let links =  db::get_links_to_process(&conn, batch_size);
-        WikiRepo::get_conspiracies(&c, links, title.to_string(), |p2, categories| {
+        WikiRepo::get_conspiracies(&c, links, title.to_string(), |p2| {
             match db::add_conspiracy(&conn, &p2) {
                 Err(e) => println!("SAVE ERROR: {} {} {}", e ,p2.title, p2.page_id),
                 Ok(_) => {
                     let title = &p2.title;
-                    db::add_categories(&conn, categories).unwrap();
                     db::mark_link_as_processed(&conn, title).expect(&format!("A problem occurred when marking the link '{}' as processed",title));
                     println!("Added: {} {}", title, p2.page_id)
                 }

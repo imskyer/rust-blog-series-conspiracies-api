@@ -4,3 +4,5 @@
 .env
 database/
 conspiracies.backup.tgz
+categories.txtrls
+rls/

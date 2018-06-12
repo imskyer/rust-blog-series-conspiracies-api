@@ -1,17 +1,27 @@
 table! {
-    categories_to_pages (page_id, category) {
-        page_id -> Nullable<Text>,
-        category -> Nullable<Text>,
+    categories (id) {
+        id -> Nullable<Integer>,
+        category -> Text,
+        raw_name -> Text,
     }
 }
 
 table! {
     conspiracies (page_id) {
-        page_id -> Nullable<Text>,
-        title -> Nullable<Text>,
-        summary -> Nullable<Text>,
-        content -> Nullable<Text>,
-        background -> Nullable<Text>,
+        title -> Text,
+        page_id -> Text,
+        summary -> Text,
+        content -> Text,
+        background -> Text,
+    }
+}
+
+table! {
+    conspiracy_tags (conspiracy_id, tag_id) {
+        conspiracy_id -> Nullable<Text>,
+        tag_id -> Nullable<Integer>,
+        conspiracy_title -> Nullable<Text>,
+        tag_name -> Nullable<Text>,
     }
 }
 
@@ -22,8 +32,21 @@ table! {
     }
 }
 
+table! {
+    tags (id) {
+        id -> Integer,
+        name -> Text,
+        approved -> Integer,
+    }
+}
+
+joinable!(conspiracy_tags -> conspiracies (conspiracy_id));
+joinable!(conspiracy_tags -> tags (tag_id));
+
 allow_tables_to_appear_in_same_query!(
-    categories_to_pages,
+    categories,
     conspiracies,
+    conspiracy_tags,
     links_processed,
+    tags,
 );
