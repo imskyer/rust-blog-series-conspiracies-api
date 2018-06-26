@@ -16,12 +16,14 @@ use conspiracies::actors::{
     conspiracies::*, 
     db_executor::*,
 };
-use actix_web::{http, App, AsyncResponder, HttpRequest, HttpResponse};
+use actix_web::{http, http::header, App, AsyncResponder, HttpRequest, HttpResponse};
 use actix_web::server::HttpServer;
 use futures::Future;
 use actix_web::Error;
+use actix_web::fs;
 use actix_web::Json;
 use actix_web::middleware::Logger;
+use actix_web::middleware::cors::{AllOrSome, Cors};
 use diesel::prelude::*;
 use conspiracies::models;
 
@@ -106,9 +108,11 @@ fn tag_conspiracy((req, conspiracy_tag): (HttpRequest<State>, Json<models::Consp
       .responder()
 }
 
-
-fn index(_req: HttpRequest<State>) -> &'static str {
-    "The men in black are REAL!"
+fn index(_req: HttpRequest<State>) -> std::result::Result<actix_web::fs::NamedFile, std::io::Error> {
+    match fs::NamedFile::open("site/index.html") {
+        Ok(file) => Ok(file),
+        Err(e) => Err(e)
+    }
 }
 
 fn main() {
@@ -126,12 +130,21 @@ fn main() {
     HttpServer::new(move || {
         App::with_state(State{db: addr.clone()})
             .middleware(Logger::default())
-            .resource("/", |r| r.method(http::Method::GET).f(index))
-            .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
-            .resource("/conspiracies/{page_id}/tag", |r| r.method(http::Method::POST).with(tag_conspiracy))
-            .resource("/tags/new", |r| r.method(http::Method::POST).with(add_tag))
-            .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
-            .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))})
+            .configure(|app| {
+                Cors::for_app(app)
+                    .allowed_origin("http://localhost:8000")
+                    .allowed_methods(vec![http::Method::GET, http::Method::POST, http::Method::PUT, http::Method::OPTIONS])
+                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                    .allowed_header(header::CONTENT_TYPE)
+                    .max_age(3600)
+                    .resource("/", |r| r.method(http::Method::GET).f(index))
+                    .resource("/conspiracies/{page_id}", |r| r.method(http::Method::GET).a(get_conspiracies_by_id))
+                    .resource("/conspiracies/{page_id}/tag", |r| r.method(http::Method::POST).with(tag_conspiracy))
+                    .resource("/tags/new", |r| r.method(http::Method::POST).with(add_tag))
+                    .resource("/tags", |r| r.method(http::Method::GET).a(get_tags))
+                    .resource("/conspiracies", |r| r.method(http::Method::GET).a(get_conspiracies))
+                    .register()
+            })})
         .bind("127.0.0.1:8088").unwrap()
         .start();
 
