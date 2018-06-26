@@ -10,3 +10,11 @@ The code in this repository is part of a blog series that I am writing as I lear
  [[code](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p2-diesel)]
 * [Post #3 - Learning Rust - Conspiracies, Dissemination, and REST APIs](https://www.myprogrammingadventure.org/posts/learning-rust/learning-rust-p3-conspiracies-dissemination-and-rest-apis/)
  [[code](https://github.com/rippinrobr/rust-blog-series-conspiracies-api/tree/p3-end)]
+
+I've started a new series, Learning Elm, where I am building out a UI for the API.  If you are interested, here are the links to the Elm Posts
+
+## Elm Posts
+
+* [Post #1 Learning Elm - Conspiring to Build a Ui](https://www.myprogrammingadventure.org/posts/learning-elm/learning-elm-p4-conspiring-to-build-a-ui/)
+*  Post #2 Learning Elm - Fetching Data
+*  Post #3 Learning Elm - Changing Data
