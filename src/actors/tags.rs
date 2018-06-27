@@ -24,7 +24,7 @@ impl Handler<AddTag> for DbExecutor {
 }
 
 pub struct Tags {
-    pub page_num: i64
+    pub page_num: i32
 }
 
 impl Message for Tags {

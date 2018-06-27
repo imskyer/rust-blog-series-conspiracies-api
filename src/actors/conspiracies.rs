@@ -5,7 +5,7 @@ use models::{Conspiracy, ConspiracyTag};
 use super::db_executor::{DbExecutor};
 // Message for returning a paged list of conspiracies
 pub struct Conspiracies {
-    pub page_num: i64
+    pub page_num: i32
 }
 
 impl Message for Conspiracies {
@@ -21,6 +21,23 @@ impl Handler<Conspiracies> for DbExecutor {
     }
 }
 
+pub struct GetConspiraciesByTag {
+    pub page_num : i32,
+    pub tag_id : i32
+}
+
+impl Message for GetConspiraciesByTag {
+    type Result = Result<Vec<Conspiracy>, String>;
+}
+
+impl Handler<GetConspiraciesByTag> for DbExecutor {
+    type Result = Result<Vec<Conspiracy>, String>;
+
+    fn handle(&mut self, msg: GetConspiraciesByTag, _: &mut Self::Context) -> Self::Result {
+        println!("msg.page_num: {} msg.tag_id: {}", msg.page_num, msg.tag_id);
+        db::get_conspiracies_by_tag_id(&self.0, msg.page_num, msg.tag_id)
+    }
+}
 
 // Message for requesting a particular conspiracy
 pub struct GetConspiracy {
