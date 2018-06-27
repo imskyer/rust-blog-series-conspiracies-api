@@ -18,10 +18,10 @@ table! {
 
 table! {
     conspiracy_tags (conspiracy_id, tag_id) {
-        conspiracy_id -> Nullable<Text>,
-        tag_id -> Nullable<Integer>,
-        conspiracy_title -> Nullable<Text>,
-        tag_name -> Nullable<Text>,
+        conspiracy_id -> Text,
+        tag_id -> Integer,
+        conspiracy_title -> Text,
+        tag_name -> Text,
     }
 }
 

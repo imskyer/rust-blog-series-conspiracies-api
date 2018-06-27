@@ -29,7 +29,6 @@ pub fn add_tag(conn: &SqliteConnection, new_tag: NewTag) -> QueryResult<usize> {
         .execute(conn)
 }
 
-/// This needs to go away
 /// adds a new record to the cateories_to_pages table, returns the number of categories inserted
 /// or an error string
 pub fn tag_conspiracy(conn: &SqliteConnection, tagged_conspiracy: ConspiracyTag) -> QueryResult<usize> {
@@ -39,12 +38,30 @@ pub fn tag_conspiracy(conn: &SqliteConnection, tagged_conspiracy: ConspiracyTag)
 }
 
 /// Returns a Vec with at most 25 conspriacies for the given page_number.
-pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Conspiracy>, String> {
+pub fn get_conspiracies(conn: &SqliteConnection, page_number: i32) -> Result<Vec<Conspiracy>, String> {
     use schema::conspiracies::dsl::*;
-    let page_count: i64 = 25;
+    let page_count: i32 = 25;
 
-    match conspiracies.limit(page_count).offset(page_count * page_number).load::<Conspiracy>(conn) {
+    match conspiracies.limit(page_count as i64).offset((page_count * page_number) as i64).order_by(title.asc()).load::<Conspiracy>(conn) {
         Ok(c) => Ok(c),
+        Err(e) => Err(format!("ERROR: {}", e))
+    }
+}
+
+/// Returns a Vec with at most 25 conspriacies that have the tag specified by the ID for the given page_number.
+pub fn get_conspiracies_by_tag_id(conn: &SqliteConnection, page_number: i32, selected_tag_id: i32) -> Result<Vec<Conspiracy>, String> {
+    let page_count: i32 = 25;
+    let offset = page_number * page_count;
+    
+    let mut offset_str = String::from("");
+    if offset > 0 {
+        offset_str = format!("OFFSET {}", offset);
+    }
+
+    let q_stmt = format!("select c.* from conspiracies c inner join conspiracy_tags ct on c.page_id = ct.conspiracy_id where ct.tag_id = {} limit {} {}", selected_tag_id, page_count, offset_str);
+    let query = sql::<(Text, Text, Text, Text, Text)>(&q_stmt);
+    match query.load::<Conspiracy>(conn) {
+        Ok(rows) => Ok(rows),
         Err(e) => Err(format!("ERROR: {}", e))
     }
 }
@@ -59,12 +76,12 @@ pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<Conspir
 }
 
 /// Gets a Vec of the tags that are available
-pub fn get_tags(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Tag>, String> {
-    use schema::conspiracies::dsl::*;
-    let page_count: i64 = 25;
+pub fn get_tags(conn: &SqliteConnection, page_number: i32) -> Result<Vec<Tag>, String> {
+    use schema::tags::dsl::*;
+    let page_count: i32 = 25;
     let offset = page_count * page_number;
 
-    match tags::table.limit(25).offset(page_count * page_number).load::<Tag>(conn) {
+    match tags.filter(approved.eq(1)).limit(25).offset((page_count * page_number) as i64).order_by(name.asc()).load::<Tag>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }
