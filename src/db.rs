@@ -43,7 +43,7 @@ pub fn get_conspiracies(conn: &SqliteConnection, page_number: i64) -> Result<Vec
     use schema::conspiracies::dsl::*;
     let page_count: i64 = 25;
 
-    match conspiracies.limit(page_count).offset(page_count * page_number).load::<Conspiracy>(conn) {
+    match conspiracies.limit(page_count).offset(page_count * page_number).order_by(title.asc()).load::<Conspiracy>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }
@@ -60,11 +60,11 @@ pub fn get_conspiracy_by_id(conn: &SqliteConnection, id: &str) -> Result<Conspir
 
 /// Gets a Vec of the tags that are available
 pub fn get_tags(conn: &SqliteConnection, page_number: i64) -> Result<Vec<Tag>, String> {
-    use schema::conspiracies::dsl::*;
+    use schema::tags::dsl::*;
     let page_count: i64 = 25;
     let offset = page_count * page_number;
 
-    match tags::table.limit(25).offset(page_count * page_number).load::<Tag>(conn) {
+    match tags.filter(approved.eq(1)).limit(25).offset(page_count * page_number).order_by(name.asc()).load::<Tag>(conn) {
         Ok(c) => Ok(c),
         Err(e) => Err(format!("ERROR: {}", e))
     }
