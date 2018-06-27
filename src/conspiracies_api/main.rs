@@ -132,7 +132,6 @@ fn main() {
             .middleware(Logger::default())
             .configure(|app| {
                 Cors::for_app(app)
-                    .allowed_origin("http://localhost:8000")
                     .allowed_methods(vec![http::Method::GET, http::Method::POST, http::Method::PUT, http::Method::OPTIONS])
                     .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
                     .allowed_header(header::CONTENT_TYPE)
