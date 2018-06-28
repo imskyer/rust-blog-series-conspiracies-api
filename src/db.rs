@@ -57,8 +57,8 @@ pub fn get_conspiracies_by_tag_id(conn: &SqliteConnection, page_number: i32, sel
     if offset > 0 {
         offset_str = format!("OFFSET {}", offset);
     }
-
-    let q_stmt = format!("select c.* from conspiracies c inner join conspiracy_tags ct on c.page_id = ct.conspiracy_id where ct.tag_id = {} limit {} {}", selected_tag_id, page_count, offset_str);
+    
+    let q_stmt = format!("select c.title, c.page_id, c.summary, c.content, c.background from conspiracies c inner join conspiracy_tags ct on c.page_id = ct.conspiracy_id where ct.tag_id = {} order by c.title limit {} {}", selected_tag_id, page_count, offset_str);
     let query = sql::<(Text, Text, Text, Text, Text)>(&q_stmt);
     match query.load::<Conspiracy>(conn) {
         Ok(rows) => Ok(rows),
